@@ -7,8 +7,8 @@ function ModelScene(simulation) {
 
 ModelScene.prototype.createModels = function() {
 	this.createElevationSphere(this.targetSim.width,this.targetSim.height,20);
-	this.addCube([25,0,0],[1,0,0]);
-
+	this.addCube([25,0,0],[1,0,0],1);
+	this.createHomes();
 	this.createStars();
 }
 
@@ -24,7 +24,7 @@ ModelScene.prototype.createVoxels = function() {
 				if (sim.block[i][j][k] === 1) {
 					position = [(i-sim.radius)*3, (j-sim.radius)*3, (k-sim.radius)*3];
 					colour = [0,Math.random(),0.5];
-					this.addCube(position, colour);
+					this.addCube(position, colour,1);
 				}
 			}
 		}
@@ -122,13 +122,34 @@ ModelScene.prototype.createStars = function() {
 	}
 }
 
-ModelScene.prototype.addCube = function(position, colour) {
+ModelScene.prototype.createHomes = function() {
+	var pos = [];
+	var norm = [];
+	var colour = [];
+	for (var i=0; i<100; i++) {
+		var theta = Math.random()*Math.PI;
+		var phi = Math.random()*2*Math.PI;
+		var r = 20;
+
+		var x = Math.cos(phi) * Math.sin(theta);
+		var y = Math.cos(theta);
+		var z = Math.sin(phi) * Math.sin(theta);
+
+
+		pos = [x*r, y*r, z*r];
+		colour = [Math.random(),Math.random(),Math.random()];
+
+		this.addCube(pos, colour,0.2);
+	}
+}
+
+ModelScene.prototype.addCube = function(position, colour, scale) {
 	var shape = new CubeMesh();
 	var x,y,z;
 	for (var i=0; i<shape.vertex.length; i++) {
-		x = shape.vertex[i][0] + position[0];
-		y = shape.vertex[i][1] + position[1];
-		z = shape.vertex[i][2] + position[2];
+		x = shape.vertex[i][0]*scale + position[0];
+		y = shape.vertex[i][1]*scale + position[1];
+		z = shape.vertex[i][2]*scale + position[2];
 		this.vertexArray.push(x,y,z);
 		this.vertexArray.push(colour[0],colour[1],colour[2]);
 		this.vertexArray.push(shape.normal[i][0],shape.normal[i][1],shape.normal[i][2]);
