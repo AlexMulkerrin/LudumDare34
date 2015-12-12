@@ -12,6 +12,7 @@ function Program(canvasName) {
 	this.simulation = new Simulation(360,180);
 	this.display = new Display(canvasName, this.simulation);
 	this.control = new Control(canvasName, this.simulation, this.display);
+	this.display.linkControl(this.control);
 }
 
 Program.prototype.update = function() {

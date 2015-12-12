@@ -25,9 +25,10 @@ Control.prototype.createCanvasEventHandlers = function() {
 
 Control.prototype.mousePressed = function(event) {
 	this.mouse.isPressed = true;
+	this.mouse.buttonPressed = event.which;
 	this.mouse.oldX = event.clientX;
 	this.mouse.oldY = event.clientY;
-	this.targetDisplay.render3D.camera.setOrbit(0,0,0);
+	if (this.mouse.buttonPressed > 1) this.targetDisplay.render3D.camera.setOrbit(0,0,0);
 }
 
 Control.prototype.mouseReleased = function(event) {
@@ -40,12 +41,19 @@ Control.prototype.mouseUpdateCoords = function(event) {
 	m.x = event.clientX;
 	m.y = event.clientY;
 
-	if (m.isPressed) {
+	if (m.isPressed && m.buttonPressed == 3) {
 		var deltaX = m.x - m.oldX;
 		var deltaY = m.y - m.oldY;
 		this.targetDisplay.render3D.camera.orbit(deltaY,deltaX, 0);
 	}
-	if (m.isReleased) {
+	if (m.isPressed && m.buttonPressed == 2) {
+		var deltaX = m.x - m.oldX;
+		var deltaY = m.y - m.oldY;
+		var delta = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+		if (deltaX<0) delta *= -1;
+		this.targetDisplay.render3D.camera.orbit(0,0,delta);
+	}
+	if (m.isReleased && m.buttonPressed == 3) {
 		var deltaX = m.x - m.oldX;
 		var deltaY = m.y - m.oldY;
 		this.targetDisplay.render3D.camera.setOrbit(deltaY,deltaX, 0);
@@ -63,6 +71,7 @@ Control.prototype.mouseWheel = function(event) {
 		this.targetDisplay.render3D.camera.raiseOrbit();
 	}
 }
+
 
 function Mouse() {
 	this.x = 0;

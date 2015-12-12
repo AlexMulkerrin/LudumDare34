@@ -131,7 +131,7 @@ Render3D.prototype.drawModelScene = function() {
 	gl.uniformMatrix3fv(p.normalMatrix, false, this.camera.normalMatrix);
 	gl.uniform3fv(p.ambient, [0.08,0.08,0.08]);
 	gl.uniform3fv(p.lightColour, [1.0,1.0,1.0]);
-	gl.uniform3fv(p.lightDirection, [0.0,0.5,1.0]);
+	gl.uniform3fv(p.lightDirection, [-0.5,0.5,1.0]);
 
 	gl.drawArrays(gl.TRIANGLES, 0, this.modelScene.totalVerticies);
 	gl.flush();

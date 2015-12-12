@@ -1,6 +1,6 @@
 function TerrainGenerator(width, height) {
 	random = new PseudorandomGenerator();
-	this.seed = Math.floor(Math.random()*9000);
+	this.seed = 13;//Math.floor(Math.random()*9000);
 	random.setSeed(this.seed);
 
 	this.width = width;
@@ -12,25 +12,49 @@ function TerrainGenerator(width, height) {
 			this.elevation[i][j] = 0;
 		}
 	}
+	this.biome = [];
+	for (var i=0; i<this.width; i++) {
+		this.biome[i] = [];
+		for (var j=0; j<this.height; j++) {
+			this.biome[i][j] = biomeID.rock;
+		}
+	}
+
 	this.raiseLand();
 	this.selectBiome();
-	this.flattenOcean();
-	return this;
+	//this.flattenOcean();
+
+	this.setOcclusion();
+
+	this.findBeaches();
+
 }
 
 TerrainGenerator.prototype.raiseLand = function() {
 	var noise = new OctaveNoise(8);
 	for (var i=0; i<this.width; i++) {
+		var phi = i * 2 * Math.PI / this.width;
+		var sinPhi = Math.sin(phi);
+		var cosPhi = Math.cos(phi);
+
+
 		for (var j=0; j<this.height; j++) {
-			this.elevation[i][j] = noise.compute(i*0.05,j*0.05);
+			var theta = j * Math.PI / this.height;
+			var sinTheta = Math.sin(theta);
+			var cosTheta = Math.cos(theta);
+
+			var x = cosPhi * sinTheta;
+			var y = cosTheta;
+			var z = sinPhi * sinTheta;
+
+			//this.elevation[i][j] = noise.compute(i*0.05,j*0.05);
+			this.elevation[i][j] = noise.compute3D(x*3,y*3,z*3);
 		}
 	}
 }
 
 TerrainGenerator.prototype.selectBiome = function() {
-	this.biome = [];
 	for (var i=0; i<this.width; i++) {
-		this.biome[i] = [];
 		for (var j=0; j<this.height; j++) {
 			this.biome[i][j] = biomeID.ocean;
 
@@ -41,17 +65,19 @@ TerrainGenerator.prototype.selectBiome = function() {
 			this.elevation[(i+1)%this.width][(j+1)%this.height]
 			;// /4;
 
-			if (avElev>2) {
+			if (avElev>3) {
 			   this.biome[i][j] = biomeID.ice;
-		   } else  if (avElev>1) {
+		   } else  if (avElev>2) {
 				this.biome[i][j] = biomeID.rock;
-			} else if (avElev>0) {
-				this.biome[i][j] = biomeID.beach;
+			} else  if (avElev>1) {
+ 				this.biome[i][j] = biomeID.hill;
+ 			} else if (avElev>0) {
+				this.biome[i][j] = biomeID.grass;
 			} else if (avElev>-1) {
 				this.biome[i][j] = biomeID.coast;
 			}
 
-			var temp = Math.abs(j-this.height/2)/2 + this.elevation[i][j] - Math.random();
+			var temp =0;// Math.abs(j-this.height/2)/2 + this.elevation[i][j] - Math.random();
 			if (temp>30 && avElev>0) {
 				this.biome[i][j] = biomeID.ice;
 			}
@@ -67,6 +93,50 @@ TerrainGenerator.prototype.flattenOcean = function() {
 	}
 }
 
+TerrainGenerator.prototype.setOcclusion = function() {
+	var adj = [[0,1],[1,0],[0,-1],[-1,0],[1,1],[-1,1],[1,-1],[-1,-1]];
+	this.occlusion = [];
+	for (var i=0; i<this.width; i++) {
+		this.occlusion[i] = [];
+		for (var j=0; j<this.height; j++) {
+			this.occlusion[i][j] = 1;
+			for (var e=0; e<adj.length; e++) {
+				var x = (i + adj[e][0]) % this.width-1;
+				if (x<0) x+=this.width-1;
+				var y = (j +adj[e][1]) % this.height-1;
+				if (y<0) y+=this.height-1;
+
+				var diff = this.elevation[x][y] - this.elevation[i][j];
+				if (diff>0) this.occlusion[i][j] += diff;
+			}
+		}
+	}
+}
+
+TerrainGenerator.prototype.findBeaches = function() {
+	var adj = [[0,1],[1,0],[0,-1],[-1,0],[1,1],[-1,1],[1,-1],[-1,-1]];
+	for (var i=0; i<this.width; i++) {
+		for (var j=0; j<this.height; j++) {
+			if (this.biome[i][j] !== biomeID.ocean && this.biome[i][j] !== biomeID.coast) {
+				for (var e=0; e<adj.length; e++) {
+					var x = (i + adj[e][0]) % (this.width-1);
+					if (x<0) x+=this.width;
+					var y = (j +adj[e][1]) % (this.height-1);
+					if (y<0) y+=this.height;
+
+					if (this.biome[x][y] == biomeID.ocean || this.biome[x][y]== biomeID.coast) {
+						this.biome[i][j] = biomeID.beach;
+					}
+				}
+			}
+		}
+	}
+}
+
+TerrainGenerator.prototype.getOcclusion = function(x,y) {
+	return this.occlusion[x][y];
+}
+
 function OctaveNoise(octaves) {
 	this.perlin = [];
 	this.octaves = octaves;
@@ -80,6 +150,16 @@ OctaveNoise.prototype.compute = function(x,y) {
 	var amplitude = 1;
 	for (var i=0; i<this.octaves; i++) {
 		result += this.perlin[i].compute( x/amplitude, y/amplitude) * amplitude;
+		amplitude /= 2;
+	}
+	return result;
+}
+
+OctaveNoise.prototype.compute3D = function(x,y,z) {
+	var result = 0
+	var amplitude = 1;
+	for (var i=0; i<this.octaves; i++) {
+		result += this.perlin[i].compute3D( x/amplitude, y/amplitude, z/amplitude) * amplitude;
 		amplitude /= 2;
 	}
 	return result;
@@ -140,6 +220,52 @@ PerlinNoise.prototype.compute = function(x,y) {
 	return result;
 }
 
+PerlinNoise.prototype.compute3D = function(x,y,z) {
+	var ix0 = Math.floor( x ); // Integer part of x
+    var iy0 = Math.floor( y ); // Integer part of y
+    var iz0 = Math.floor( z ); // Integer part of z
+    var fx0 = x - ix0;        // Fractional part of x
+    var fy0 = y - iy0;        // Fractional part of y
+    var fz0 = z - iz0;        // Fractional part of z
+    var fx1 = fx0 - 1.0;
+    var fy1 = fy0 - 1.0;
+    var fz1 = fz0 - 1.0;
+    var ix1 = ( ix0 + 1 ) & 0xff; // Wrap to 0..255
+    var iy1 = ( iy0 + 1 ) & 0xff;
+    var iz1 = ( iz0 + 1 ) & 0xff;
+    var ix0 = ix0 & 0xff;
+    var iy0 = iy0 & 0xff;
+    var iz0 = iz0 & 0xff;
+
+    r = this.fade( fz0 );
+    t = this.fade( fy0 );
+    s = this.fade( fx0 );
+
+	var perm = this.noise;
+	var nxy0 = grad3(perm[ix0 + perm[iy0 + perm[iz0]]], fx0, fy0, fz0);
+    var nxy1 = grad3(perm[ix0 + perm[iy0 + perm[iz1]]], fx0, fy0, fz1);
+    var nx0 = this.lerp( r, nxy0, nxy1 );
+
+    var nxy0 = grad3(perm[ix0 + perm[iy1 + perm[iz0]]], fx0, fy1, fz0);
+    var nxy1 = grad3(perm[ix0 + perm[iy1 + perm[iz1]]], fx0, fy1, fz1);
+    var nx1 = this.lerp( r, nxy0, nxy1 );
+
+    var n0 = this.lerp( t, nx0, nx1 );
+
+    var nxy0 = grad3(perm[ix1 + perm[iy0 + perm[iz0]]], fx1, fy0, fz0);
+    var nxy1 = grad3(perm[ix1 + perm[iy0 + perm[iz1]]], fx1, fy0, fz1);
+    var nx0 = this.lerp( r, nxy0, nxy1 );
+
+    var nxy0 = grad3(perm[ix1 + perm[iy1 + perm[iz0]]], fx1, fy1, fz0);
+    var nxy1 = grad3(perm[ix1 + perm[iy1 + perm[iz1]]], fx1, fy1, fz1);
+    var nx1 = this.lerp( r, nxy0, nxy1 );
+
+    var n1 = this.lerp( t, nx0, nx1 );
+
+	return this.lerp(s, n0, n1);
+
+}
+
 PerlinNoise.prototype.fade = function(a) {
 	return a * a * a * (a * ((a * 6) -15) +10);
 }
@@ -152,6 +278,14 @@ PerlinNoise.prototype.grad = function(hash, x, y) {
 }
 PerlinNoise.prototype.lerp = function(t, a, b) {
 	return a + t * (b - a);
+}
+
+
+function grad3(hash, x, y, z) {
+	var h = hash & 15;     // Convert low 4 bits of hash code into 12 simple
+	var u = h<8 ? x : y; // gradient directions, and compute dot product.
+	var v = h<4 ? y : h==12||h==14 ? x : z; // Fix repeats at h = 12 to 15
+   return ((h&1)? -u : u) + ((h&2)? -v : v);
 }
 
 // class for seedable random number generator

@@ -6,7 +6,7 @@ function ModelScene(simulation) {
 }
 
 ModelScene.prototype.createModels = function() {
-	this.createSphere(this.targetSim.width,this.targetSim.height,20);
+	this.createElevationSphere(this.targetSim.width,this.targetSim.height,20);
 	this.addCube([25,0,0],[1,0,0]);
 
 	this.createStars();
@@ -32,10 +32,11 @@ ModelScene.prototype.createVoxels = function() {
 
 }
 
-ModelScene.prototype.createSphere = function(longitudeBands, latitudeBands, radius) {
+ModelScene.prototype.createElevationSphere = function(longitudeBands, latitudeBands, radius) {
 	var vertexPositons = [];
 	var vertexNormals = [];
 	var vertexElevations = [];
+	var vertexOcclusion = [];
 
 	for (var latNum=0; latNum <= latitudeBands; latNum++) {
 		var theta = latNum * Math.PI / latitudeBands;
@@ -58,6 +59,7 @@ ModelScene.prototype.createSphere = function(longitudeBands, latitudeBands, radi
 			vertexNormals.push([x,y,z]);
 			vertexPositons.push([x*r, y*r, z*r]);
 			vertexElevations.push(e);
+			vertexOcclusion.push(this.targetSim.terrain.getOcclusion(longNum%longitudeBands, latNum%latitudeBands));
 
 		}
 	}
@@ -82,9 +84,13 @@ ModelScene.prototype.createSphere = function(longitudeBands, latitudeBands, radi
 			//var colour = [0,Math.random(),0.5];
 			var biome = this.targetSim.terrain.biome[longNum][latNum];
 			//var avElevation = vertexElevations[a]+vertexElevations[b]+vertexElevations[a+1]+vertexElevations[b+1]/4;
+			var biomeColour = biomePalette[biome];
+
 			var colour = [];
-			colour[0] = biomePalette[biome];//[0,avElevation,0.5];
-			colour[3] = colour[2] = colour[1] = colour[0] ;
+			colour[0] = scalarMultiplyVector3(1/vertexOcclusion[a], biomeColour);//[0,avElevation,0.5];
+			colour[1] = scalarMultiplyVector3(1/vertexOcclusion[b], biomeColour);
+			colour[2] = scalarMultiplyVector3(1/vertexOcclusion[a+1], biomeColour);
+			colour[3] = scalarMultiplyVector3(1/vertexOcclusion[b+1], biomeColour);
 
 			this.addQuad(pos, norm, colour);
 		}
@@ -152,6 +158,12 @@ ModelScene.prototype.addTriangle = function(pos, norm, colour) {
 		this.totalVerticies++;
 	}
 
+}
+
+function Model(index, position) {
+	this.index = index;
+	this.size = 0;
+	this.position = position
 }
 
 function CubeMesh() {

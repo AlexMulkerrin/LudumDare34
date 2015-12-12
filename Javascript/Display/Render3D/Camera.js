@@ -2,7 +2,7 @@ function Camera() {
 	this.projectionMatrix = getProjectionMatrix4(40, window.innerWidth/window.innerHeight, 1, 1000);
 	this.modelMatrix = identityMatrix4();
 	this.viewMatrix = identityMatrix4();
-	this.viewMatrix = translateMatrix4(this.viewMatrix, 0, 0, -50);
+	this.viewMatrix = translateMatrix4(this.viewMatrix, 0, 0, -500);
 	this.normalMatrix = emptyMatrix3();
 	this.normalMatrix = mat4toInverseMat3(this.modelMatrix, this.normalMatrix);
 	this.normalMatrix = mat3transpose(this.normalMatrix);
@@ -10,9 +10,20 @@ function Camera() {
 	this.velX = 0;
 	this.velY = -2;
 	this.velZ = 0;
+
+	this.isIntro = true;
 }
 
 Camera.prototype.update = function() {
+	if (this.isIntro) {
+		var dz = -this.viewMatrix[14]/40;
+		this.viewMatrix = translateMatrix4(this.viewMatrix, 0, 0, dz);
+		if (this.viewMatrix[14] > -50) {
+			this.viewMatrix[14] = -50;
+			this.isIntro = false;
+		}
+	}
+
 	this.orbit(this.velX, this.velY, this.velZ);
 
 	this.normalMatrix = emptyMatrix3();
@@ -38,13 +49,28 @@ Camera.prototype.setOrbit = function(deltaX, deltaY, deltaZ) {
 }
 
 Camera.prototype.lowerOrbit = function() {
-	this.viewMatrix = translateMatrix4(this.viewMatrix, 0, 0, 2);
+	var dz = -this.viewMatrix[14]/10;
+	this.viewMatrix = translateMatrix4(this.viewMatrix, 0, 0, dz);
 	if (this.viewMatrix[14] > -30) this.viewMatrix[14] = -30;
 }
 
 Camera.prototype.raiseOrbit = function() {
-	this.viewMatrix = translateMatrix4(this.viewMatrix, 0, 0, -2);
+	var dz = this.viewMatrix[14]/10;
+	this.viewMatrix = translateMatrix4(this.viewMatrix, 0, 0, dz);
+	if (this.viewMatrix[14] < -450) this.viewMatrix[14] = -450;
 
+}
+
+Camera.prototype.getCoordBelow = function() {
+	var x = this.modelMatrix[0];
+	var y = this.modelMatrix[5];
+	var z = this.modelMatrix[10];
+	var r = Math.sqrt(x*x + y*y + z*z);
+
+	var theta = Math.acos(z/r)
+	var phi = Math.atan2(y,x);
+
+	return [theta, phi];
 }
 
 function identityMatrix4() {
@@ -208,4 +234,12 @@ function getProjectionMatrix4(angle, a, minZ, maxZ) {
 
 function degToRad(angle) {
 	return(angle*Math.PI/180);
+}
+
+function scalarMultiplyVector3(scaler, vector) {
+	return [scaler*vector[0],
+			scaler*vector[1],
+			scaler*vector[2],
+
+];
 }
