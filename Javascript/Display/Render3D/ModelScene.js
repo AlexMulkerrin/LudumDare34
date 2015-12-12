@@ -6,8 +6,10 @@ function ModelScene(simulation) {
 }
 
 ModelScene.prototype.createModels = function() {
-	this.createSphere(30,30,20);
-	this.addCube([0,0,0],[1,0,0]);
+	this.createSphere(this.targetSim.width,this.targetSim.height,20);
+	this.addCube([25,0,0],[1,0,0]);
+
+	this.createStars();
 }
 
 ModelScene.prototype.createVoxels = function() {
@@ -33,6 +35,7 @@ ModelScene.prototype.createVoxels = function() {
 ModelScene.prototype.createSphere = function(longitudeBands, latitudeBands, radius) {
 	var vertexPositons = [];
 	var vertexNormals = [];
+	var vertexElevations = [];
 
 	for (var latNum=0; latNum <= latitudeBands; latNum++) {
 		var theta = latNum * Math.PI / latitudeBands;
@@ -48,8 +51,14 @@ ModelScene.prototype.createSphere = function(longitudeBands, latitudeBands, radi
 			var y = cosTheta;
 			var z = sinPhi * sinTheta;
 
+			var e = this.targetSim.terrain.elevation[longNum%longitudeBands][latNum%latitudeBands];
+			var r = radius*(e*0.1+0.95);
+
+
 			vertexNormals.push([x,y,z]);
-			vertexPositons.push([x*radius, y*radius, z*radius]);
+			vertexPositons.push([x*r, y*r, z*r]);
+			vertexElevations.push(e);
+
 		}
 	}
 
@@ -70,10 +79,40 @@ ModelScene.prototype.createSphere = function(longitudeBands, latitudeBands, radi
 			norm[2] = vertexNormals[a+1];
 			norm[3] = vertexNormals[b+1];
 
-			var colour = [0,Math.random(),0.5];
+			//var colour = [0,Math.random(),0.5];
+			var biome = this.targetSim.terrain.biome[longNum][latNum];
+			//var avElevation = vertexElevations[a]+vertexElevations[b]+vertexElevations[a+1]+vertexElevations[b+1]/4;
+			var colour = [];
+			colour[0] = biomePalette[biome];//[0,avElevation,0.5];
+			colour[3] = colour[2] = colour[1] = colour[0] ;
 
 			this.addQuad(pos, norm, colour);
 		}
+	}
+}
+
+ModelScene.prototype.createStars = function() {
+	var pos = [];
+	var norm = [];
+	var colour = [];
+	var disp = [[0,0],[0.003,0.005],[-0.003,0.005]];
+	for (var i=0; i<1000; i++) {
+		var theta = Math.random()*Math.PI;
+		var phi = Math.random()*2*Math.PI;
+		var r = Math.random()*50+500;
+
+		for (var j=0; j<disp.length; j++) {
+
+			var x = Math.cos(phi+disp[j][0]) * Math.sin(theta+disp[j][1]);
+			var y = Math.cos(theta+disp[j][1]);
+			var z = Math.sin(phi+disp[j][0]) * Math.sin(theta+disp[j][1]);
+
+
+			pos[j] = [x*r, y*r, z*r];
+			norm[j]= [-x,-y,-z];
+			colour[j] = [1,1,1];
+		}
+		this.addTriangle(pos, norm, colour);
 	}
 }
 
@@ -95,19 +134,19 @@ ModelScene.prototype.addQuad = function(pos, norm, colour) {
 	this.addTriangle(
 		[pos[0], pos[1], pos[2]],
 		[norm[0], norm[1], norm[2]],
-		colour
+		[colour[0], colour[1], colour[2]]
 	);
 	this.addTriangle(
 		[pos[1], pos[3], pos[2]],
 		[norm[1], norm[3], norm[2]],
-		colour
+		[colour[1], colour[3], colour[2]]
 	);
 }
 
 ModelScene.prototype.addTriangle = function(pos, norm, colour) {
 	for (var i=0; i<pos.length; i++) {
 		this.vertexArray.push(pos[i][0],pos[i][1],pos[i][2]);
-		this.vertexArray.push(colour[0],colour[1],colour[2]);
+		this.vertexArray.push(colour[i][0],colour[i][1],colour[i][2]);
 		this.vertexArray.push(norm[i][0],norm[i][1],norm[i][2]);
 
 		this.totalVerticies++;
@@ -134,7 +173,7 @@ function CubeMesh() {
 						c[7],	c[0],	c[6],
 						c[0],	c[7],	c[3]];
 	// array of face normals
-	var d = [[0,0,-1],[0,0,1],[-1,0,0],[1,0,0],[0,-1,0],[0,1,0]];
+	var d = [[0,0,1],[0,0,-1],[1,0,0],[-1,0,0],[0,1,0],[0,-1,0]];
 	this.normal=[ d[0], d[0], d[0],
 				d[0], d[0], d[0],
 				d[1], d[1], d[1],

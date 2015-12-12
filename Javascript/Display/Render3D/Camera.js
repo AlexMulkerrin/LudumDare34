@@ -1,17 +1,50 @@
 function Camera() {
-	this.projectionMatrix = getProjectionMatrix4(40, window.innerWidth/window.innerHeight, 1, 100);
+	this.projectionMatrix = getProjectionMatrix4(40, window.innerWidth/window.innerHeight, 1, 1000);
 	this.modelMatrix = identityMatrix4();
 	this.viewMatrix = identityMatrix4();
 	this.viewMatrix = translateMatrix4(this.viewMatrix, 0, 0, -50);
 	this.normalMatrix = emptyMatrix3();
+	this.normalMatrix = mat4toInverseMat3(this.modelMatrix, this.normalMatrix);
+	this.normalMatrix = mat3transpose(this.normalMatrix);
+
+	this.velX = 0;
+	this.velY = -2;
+	this.velZ = 0;
 }
 
 Camera.prototype.update = function() {
-	this.modelMatrix = rotateY(this.modelMatrix, 0.02);
+	this.orbit(this.velX, this.velY, this.velZ);
 
 	this.normalMatrix = emptyMatrix3();
 	this.normalMatrix = mat4toInverseMat3(this.modelMatrix, this.normalMatrix);
 	this.normalMatrix = mat3transpose(this.normalMatrix);
+}
+
+Camera.prototype.orbit = function(deltaX, deltaY, deltaZ) {
+	var rotationMatrix = identityMatrix4();
+	rotationMatrix = rotateMatrix4(rotationMatrix, degToRad(deltaX/5), [1,0,0]);
+	rotationMatrix = rotateMatrix4(rotationMatrix, degToRad(deltaY/5), [0,1,0]);
+	rotationMatrix = rotateMatrix4(rotationMatrix, degToRad(deltaZ/5), [0,0,1]);
+
+	this.modelMatrix = multiplyMatrix4(rotationMatrix, this.modelMatrix);
+	//this.update();
+
+}
+
+Camera.prototype.setOrbit = function(deltaX, deltaY, deltaZ) {
+	this.velX = deltaX;
+	this.velY = deltaY;
+	this.velZ = deltaZ;
+}
+
+Camera.prototype.lowerOrbit = function() {
+	this.viewMatrix = translateMatrix4(this.viewMatrix, 0, 0, 2);
+	if (this.viewMatrix[14] > -30) this.viewMatrix[14] = -30;
+}
+
+Camera.prototype.raiseOrbit = function() {
+	this.viewMatrix = translateMatrix4(this.viewMatrix, 0, 0, -2);
+
 }
 
 function identityMatrix4() {
@@ -44,6 +77,66 @@ function rotateY(m,angle) {
 
 	return m;
 }
+
+function rotateMatrix4(a,b,c,d){
+	var e=c[0],g=c[1];
+	c=c[2];
+	var f=Math.sqrt(e*e+g*g+c*c);
+	if(!f)return null;
+	if(f!=1){f=1/f;
+	e*=f;
+	g*=f;
+	c*=f}var h=Math.sin(b),i=Math.cos(b),j=1-i;
+	b=a[0];
+	f=a[1];
+	var k=a[2],l=a[3],o=a[4],m=a[5],n=a[6],p=a[7],r=a[8],s=a[9],A=a[10],B=a[11],t=e*e*j+i,u=g*e*j+c*h,v=c*e*j-g*h,w=e*g*j-c*h,x=g*g*j+i,y=c*g*j+e*h,z=e*c*j+g*h;
+	e=g*c*j-e*h;
+	g=c*c*j+i;
+	if(d){if(a!=d){d[12]=a[12];
+	d[13]=a[13];
+	d[14]=a[14];
+	d[15]=a[15]}}else d=a;
+	d[0]=b*t+o*u+r*v;
+	d[1]=f*t+m*u+s*v;
+	d[2]=k*t+n*u+A*v;
+	d[3]=l*t+p*u+B*
+	v;
+	d[4]=b*w+o*x+r*y;
+	d[5]=f*w+m*x+s*y;
+	d[6]=k*w+n*x+A*y;
+	d[7]=l*w+p*x+B*y;
+	d[8]=b*z+o*e+r*g;
+	d[9]=f*z+m*e+s*g;
+	d[10]=k*z+n*e+A*g;
+	d[11]=l*z+p*e+B*g;
+	return d
+}
+
+function multiplyMatrix4(a,b,c){
+	c||(c=a);
+	var d=a[0],e=a[1],g=a[2],f=a[3],h=a[4],i=a[5],j=a[6],k=a[7],l=a[8],o=a[9],m=a[10],n=a[11],p=a[12],r=a[13],s=a[14];
+	a=a[15];
+	var A=b[0],B=b[1],t=b[2],u=b[3],v=b[4],w=b[5],x=b[6],y=b[7],z=b[8],C=b[9],D=b[10],E=b[11],q=b[12],F=b[13],G=b[14];
+	b=b[15];
+	c[0]=A*d+B*h+t*l+u*p;
+	c[1]=A*e+B*i+t*o+u*r;
+	c[2]=A*g+B*j+t*m+u*s;
+	c[3]=A*f+B*k+t*n+u*a;
+	c[4]=v*d+w*h+x*l+y*p;
+	c[5]=v*e+w*i+x*o+y*r;
+	c[6]=v*g+w*j+x*m+y*s;
+	c[7]=v*f+w*k+x*n+y*a;
+	c[8]=z*d+C*h+D*l+E*p;
+	c[9]=z*e+C*i+D*o+E*r;
+	c[10]=z*
+	g+C*j+D*m+E*s;
+	c[11]=z*f+C*k+D*n+E*a;
+	c[12]=q*d+F*h+G*l+b*p;
+	c[13]=q*e+F*i+G*o+b*r;
+	c[14]=q*g+F*j+G*m+b*s;
+	c[15]=q*f+F*k+G*n+b*a;
+	return c
+};
 
 function emptyMatrix3() {
 	return [0, 0, 0,

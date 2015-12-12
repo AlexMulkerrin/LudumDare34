@@ -9,10 +9,12 @@ function loadProgram() {
 function Program(canvasName) {
 	this.refreshDelay = 50;
 
-	this.simulation = new Simulation(10,10,10);
+	this.simulation = new Simulation(360,180);
 	this.display = new Display(canvasName, this.simulation);
+	this.control = new Control(canvasName, this.simulation, this.display);
 }
 
 Program.prototype.update = function() {
 	this.display.update();
+	this.control.mouse.isReleased = false;
 }
