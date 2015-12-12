@@ -1,6 +1,28 @@
-function ModelScene() {
+function ModelScene(simulation) {
+	this.targetSim = simulation;
+
 	this.totalVerticies = 0;
 	this.vertexArray = [];
+}
+
+ModelScene.prototype.createModels = function() {
+	var colour = [];
+	var position = [];
+
+	var sim = this.targetSim;
+
+	for (var i=0; i<sim.width; i++) {
+		for (var j=0; j<sim.height; j++) {
+			for (var k=0; k<sim.depth; k++) {
+				if (sim.block[i][j][k] === 1) {
+					position = [(i-sim.radius)*3, (j-sim.radius)*3, (k-sim.radius)*3];
+					colour = [0,Math.random(),0.5];
+					this.addCube(position, colour);
+				}
+			}
+		}
+	}
+
 }
 
 ModelScene.prototype.addCube = function(position, colour) {

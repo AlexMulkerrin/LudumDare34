@@ -1,10 +1,12 @@
-function Display(canvasName) {
+function Display(canvasName, simulation) {
+	this.targetSim = simulation;
+
 	this.canvas = document.getElementById(canvasName);
 	this.canvas.width = window.innerWidth;
 	this.canvas.height = window.innerHeight;
 	this.ctx = this.canvas.getContext("2d");
 
-	this.render3D = new Render3D();
+	this.render3D = new Render3D(this.targetSim);
 }
 
 Display.prototype.update = function() {

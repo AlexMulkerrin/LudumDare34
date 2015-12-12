@@ -9,7 +9,8 @@ function loadProgram() {
 function Program(canvasName) {
 	this.refreshDelay = 50;
 
-	this.display = new Display(canvasName);
+	this.simulation = new Simulation(10,10,10);
+	this.display = new Display(canvasName, this.simulation);
 }
 
 Program.prototype.update = function() {

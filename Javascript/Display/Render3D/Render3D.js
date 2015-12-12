@@ -1,4 +1,6 @@
-function Render3D() {
+function Render3D(simulation) {
+	this.targetSim = simulation;
+
 	this.canvas = document.createElement('canvas');
 	this.canvas.width = window.innerWidth;
 	this.canvas.height = window.innerHeight;
@@ -92,10 +94,8 @@ Render3D.prototype.createPointers = function() {
 }
 
 Render3D.prototype.createModels = function() {
-	this.modelScene = new ModelScene();
-	this.modelScene.addCube([0,0,0],[1.0,0,0]);
-	//this.modelScene.totalVerticies=0;
-	//this.modelScene.vertexArray = [];
+	this.modelScene = new ModelScene(this.targetSim);
+	this.modelScene.createModels();
 }
 
 Render3D.prototype.createBuffers= function() {
