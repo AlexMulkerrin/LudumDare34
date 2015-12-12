@@ -92,9 +92,10 @@ Render3D.prototype.createPointers = function() {
 }
 
 Render3D.prototype.createModels = function() {
-	this.modelScene = {};//new ModelScene();
-	this.modelScene.totalVerticies=0;
-	this.modelScene.vertexArray = [];
+	this.modelScene = new ModelScene();
+	this.modelScene.addCube([0,0,0],[1.0,0,0]);
+	//this.modelScene.totalVerticies=0;
+	//this.modelScene.vertexArray = [];
 }
 
 Render3D.prototype.createBuffers= function() {

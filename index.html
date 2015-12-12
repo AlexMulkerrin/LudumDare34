@@ -24,7 +24,7 @@
 			vertexColour = colour;
 			vertexNormal = normalize(NormalMatrix * normal);
 		}
-	</script> src="Javascript/Display/Render3D/VertexShader.vert">
+	</script>
 	<script id="fragShader" type="x-shader/x-fragment">
 		precision mediump float;
 
@@ -42,8 +42,9 @@
 
 			gl_FragColor = vec4(rgb, 1);
 		}
-	</script>  src="Javascript/Display/Render3D/FragmentShader.vert">
+	</script>
 	<script type="text/javascript" src="Javascript/Display/Render3D/Render3D.js"></script>
+	<script type="text/javascript" src="Javascript/Display/Render3D/ModelScene.js"></script>
 	<script type="text/javascript" src="Javascript/Display/Render3D/Camera.js"></script>
 
 
