@@ -2,7 +2,7 @@ function Camera() {
 	this.projectionMatrix = getProjectionMatrix4(40, window.innerWidth/window.innerHeight, 1, 100);
 	this.modelMatrix = identityMatrix4();
 	this.viewMatrix = identityMatrix4();
-	this.viewMatrix = translateMatrix4(this.viewMatrix, 0, -2, -50);
+	this.viewMatrix = translateMatrix4(this.viewMatrix, 0, 0, -50);
 	this.normalMatrix = emptyMatrix3();
 }
 

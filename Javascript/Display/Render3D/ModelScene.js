@@ -6,6 +6,11 @@ function ModelScene(simulation) {
 }
 
 ModelScene.prototype.createModels = function() {
+	this.createSphere(30,30,20);
+	this.addCube([0,0,0],[1,0,0]);
+}
+
+ModelScene.prototype.createVoxels = function() {
 	var colour = [];
 	var position = [];
 
@@ -25,6 +30,53 @@ ModelScene.prototype.createModels = function() {
 
 }
 
+ModelScene.prototype.createSphere = function(longitudeBands, latitudeBands, radius) {
+	var vertexPositons = [];
+	var vertexNormals = [];
+
+	for (var latNum=0; latNum <= latitudeBands; latNum++) {
+		var theta = latNum * Math.PI / latitudeBands;
+		var sinTheta = Math.sin(theta);
+		var cosTheta = Math.cos(theta);
+
+		for (var longNum=0; longNum <= longitudeBands; longNum++) {
+			var phi = longNum * 2 * Math.PI / longitudeBands;
+			var sinPhi = Math.sin(phi);
+			var cosPhi = Math.cos(phi);
+
+			var x = cosPhi * sinTheta;
+			var y = cosTheta;
+			var z = sinPhi * sinTheta;
+
+			vertexNormals.push([x,y,z]);
+			vertexPositons.push([x*radius, y*radius, z*radius]);
+		}
+	}
+
+	for (var latNum=0; latNum < latitudeBands; latNum++) {
+		for (var longNum=0; longNum < longitudeBands; longNum++) {
+			var a = latNum * (longitudeBands+1) + longNum;
+			var b = a + longitudeBands +1;
+
+			var pos = [];
+			pos[0] = vertexPositons[a];
+			pos[1] = vertexPositons[b];
+			pos[2] = vertexPositons[a+1];
+			pos[3] = vertexPositons[b+1];
+
+			var norm = [];
+			norm[0] = vertexNormals[a];
+			norm[1] = vertexNormals[b];
+			norm[2] = vertexNormals[a+1];
+			norm[3] = vertexNormals[b+1];
+
+			var colour = [0,Math.random(),0.5];
+
+			this.addQuad(pos, norm, colour);
+		}
+	}
+}
+
 ModelScene.prototype.addCube = function(position, colour) {
 	var shape = new CubeMesh();
 	var x,y,z;
@@ -37,6 +89,30 @@ ModelScene.prototype.addCube = function(position, colour) {
 		this.vertexArray.push(shape.normal[i][0],shape.normal[i][1],shape.normal[i][2]);
 		this.totalVerticies++;
 	}
+}
+
+ModelScene.prototype.addQuad = function(pos, norm, colour) {
+	this.addTriangle(
+		[pos[0], pos[1], pos[2]],
+		[norm[0], norm[1], norm[2]],
+		colour
+	);
+	this.addTriangle(
+		[pos[1], pos[3], pos[2]],
+		[norm[1], norm[3], norm[2]],
+		colour
+	);
+}
+
+ModelScene.prototype.addTriangle = function(pos, norm, colour) {
+	for (var i=0; i<pos.length; i++) {
+		this.vertexArray.push(pos[i][0],pos[i][1],pos[i][2]);
+		this.vertexArray.push(colour[0],colour[1],colour[2]);
+		this.vertexArray.push(norm[i][0],norm[i][1],norm[i][2]);
+
+		this.totalVerticies++;
+	}
+
 }
 
 function CubeMesh() {

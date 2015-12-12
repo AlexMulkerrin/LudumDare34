@@ -7,6 +7,12 @@ function Display(canvasName, simulation) {
 	this.ctx = this.canvas.getContext("2d");
 
 	this.render3D = new Render3D(this.targetSim);
+
+	var midX = this.canvas.width/2;
+	var midY = this.canvas.height/2;
+	this.gradient = this.ctx.createRadialGradient(midX,midY,275,midX,midY,325);
+	this.gradient.addColorStop(0, "#35CCFF");
+	this.gradient.addColorStop(1, "black");
 }
 
 Display.prototype.update = function() {
@@ -17,7 +23,7 @@ Display.prototype.update = function() {
 }
 
 Display.prototype.clearCanvas = function() {
-	this.ctx.fillStyle = "#DCE5F2";
+	this.ctx.fillStyle = this.gradient;
 	this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
 }
